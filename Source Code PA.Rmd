@@ -1,0 +1,157 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(readr) 
+library('car') 
+```
+```{r}
+data=read_csv("D:/Kuliah/SM 2/PERMODELAN STATISTIK TERAPAN/data_padi.csv") 
+```
+```{r}
+# Filter data untuk Provinsi Riau 
+data<- data[data$Provinsi == "Riau", ] 
+data <- subset(data, select = -c(Tahun, Provinsi)) 
+data 
+```
+```{r}
+str(data)
+```
+```{r}
+summary(data)
+```
+
+```{r}
+hist(data$Produksi, main = "Produksi Padi", col = "darkblue") 
+```
+```{r}
+hist(data$`Luas Panen`, main = "Luas Panen", col = "darkblue")
+```
+```{r}
+hist(data$`Curah hujan`, main = "Curah Hujan", col = "darkblue")
+```
+```{r}
+hist(data$Kelembapan, main = "Kelembapan", col = "darkblue")
+```
+```{r}
+hist(data$`Suhu rata-rata`, main = "Suhu rata-rata", col = "darkblue")
+```
+```{r}
+heatmap(cor(data), margins = c(10, 10))
+```
+```{r}
+pairs(~data$Produksi+data$`Luas Panen`+data$`Curah hujan`+data$Kelembapan+data$`Suhu rata-rata`,data = data,main = "Scatterplot 
+Matrix") 
+```
+```{r}
+multi.reg = lm(data$Produksi~data$`Luas Panen`+data$`Curah hujan`+data$Kelembapan+data$`Suhu rata-rata`) 
+print(summary(multi.reg))
+```
+```{r}
+#Variabel yang signifikan 
+multi.reg = lm(data$Produksi ~ data$`Luas Panen` + data$`Curah hujan` + 
+data$`Suhu rata-rata`) 
+print(summary(multi.reg)) 
+```
+```{r}
+library(tidyverse)
+```
+```{r}
+library(caret)
+```
+```{r}
+library(leaps)
+```
+```{r}
+library(dplyr)
+```
+```{r}
+best.subset = regsubsets(data$Produksi ~ data$`Luas Panen` + data$`Curah hujan` +  data$Kelembapan + data$`Suhu rata-rata`, data = data, nvmax = 6) 
+summary(best.subset)
+```
+```{r}
+#Choosing the optimal model 
+#Model selection criteria: Adjusted R2, Cp and BIC 
+res.sum <- summary(best.subset) 
+data.frame( 
+Adj.R2 = which.max(res.sum$adjr2), 
+CP = which.min(res.sum$cp), 
+BIC = which.min(res.sum$bic) 
+) 
+```
+```{r}
+# Memilih model terbaik berdasarkan kriteria yang berbeda 
+best_model_adjr2 <- which.max(res.sum$adjr2) 
+best_model_cp <- which.min(res.sum$cp) 
+best_model_bic <- which.min(res.sum$bic)
+```
+```{r}
+# Menyimpan nilai Adj.R2, CP, dan BIC ke dalam dataframe 
+model_metrics <- data.frame( 
+  Adj.R2 = best_model_adjr2, 
+  CP = best_model_cp, 
+  BIC = best_model_bic 
+) 
+```
+```{r}
+# Plot nilai Adj.R2, Cp, dan BIC 
+plot(res.sum$adjr2, type = "b", xlab = "Number of Predictors", ylab = 
+"Adjusted R-squared", 
+main = "Adjusted R-squared") 
+points(model_metrics$Adj.R2, res.sum$adjr2[model_metrics$Adj.R2], col = 
+"red", pch = 16) 
+```
+```{r}
+plot(res.sum$cp, type = "b", xlab = "Number of Predictors", ylab = "Mallow's 
+Cp", 
+main = "Mallow's Cp") 
+points(model_metrics$CP, res.sum$cp[model_metrics$CP], col = "red", pch = 16) 
+```
+```{r}
+plot(res.sum$bic, type = "b", xlab = "Number of Predictors", ylab = "Bayesian 
+Information Criterion (BIC)", 
+main = "BIC") 
+points(model_metrics$BIC, res.sum$bic[model_metrics$BIC], col = "red", pch = 
+16)
+```
+```{r}
+library(MASS)
+```
+```{r}
+# Fit the full model 
+full.model = lm(data$Produksi ~ data$`Luas Panen` + data$`Curah hujan` + 
+data$`Suhu rata-rata`, data = data) 
+```
+```{r}
+ 
+# Stepwise regression model 
+step_for.model = stepAIC(full.model, direction = "forward", trace = FALSE) 
+step_back.model = stepAIC(full.model, direction = "backward", trace = FALSE)
+```
+```{r}
+summary(full.model)
+```
+```{r}
+summary(step_for.model)
+```
+```{r}
+summary(step_back.model) 
+```
+```{r}
+lm.all = lm(data$Produksi ~ data$`Luas Panen` + data$`Curah hujan` + 
+data$`Suhu rata-rata`,data) 
+stepwise_back <- step(lm.all, direction="backward")
+```
+```{r}
+summary (stepwise_back) 
+```
+```{r}
+lm.all = lm(data$Produksi ~ data$`Luas Panen` + data$`Curah hujan` + 
+data$`Suhu rata-rata`,data) 
+stepwise_for <- step(lm.all, direction="forward") 
+```
+```{r}
+summary (stepwise_for) 
+```
